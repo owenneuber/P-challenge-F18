@@ -7,7 +7,7 @@ will send their move into the API and the turns will continue. Their will be a r
 of matches to determine standing and then a knock-out tournament to determine the winner.
 First in the tournament gets 50 points, second 45 and so on. Then you must make a presentation
 to the panel of judges on your design. They will judge you and award up to 20 points for your 
-presentation. The team with the most points at the end gets to go on to OEC!
+presentation. The team with the most points at the end gets to go on to ***!
 
 ## Tron Light Cycle Rules
 

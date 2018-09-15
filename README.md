@@ -75,22 +75,22 @@ Format options: "json", "xml", OTHERS WE MAY IMPLEMENT
     <td><b>Value Description</b></td>
   </tr>
   <tr>
-  	<td>requester_position</td>
+  	<td><b>requester_position</b></td>
 	<td>Tuple</td>
 	<td>Your position on the grid</td>
   </tr>
   <tr>
-  	<td>opponent_position</td>
+  	<td><b>opponent_position</b></td>
 	<td>Tuple</td>
 	<td>Your position on the grid</td>
   </tr>
   <tr>
-  	<td>grid</td>
+  	<td><b>grid</b></td>
 	<td>Dictionary</td>
 	<td>Dictionary of the grid and its contents in key-value pairs</td>
   </tr>
   <tr>
-  	<td>player_turn</td>
+  	<td><b>player_turn</b></td>
 	<td>Integer</td>
 	<td>The id of whichever's player's turn it is</td>
   </tr>
@@ -145,32 +145,32 @@ Format options: "json", "xml", OTHERS WE MAY IMPLEMENT
     <td><b>Value Description</b></td>
   </tr>
   <tr>
-  	<td>player_number</td>
+  	<td><b>player_number</b></td>
 	<td>Integer</td>
 	<td>The number of the player (either "1" or "2")</td>
   </tr>
   <tr>
-  	<td>player_id</td>
+  	<td><b>player_id</b></td>
 	<td>Integer</td>
 	<td>The unique id of the player</td>
   </tr>
   <tr>
-  	<td>player_position</td>
+  	<td><b>player_position</b></td>
 	<td>Tuple</td>
 	<td>The position of the player on the grid</td>
   </tr>
   <tr>
-  	<td>boost_active</td>
+  	<td><b>boost_active</b></td>
 	<td>Boolean</td>
 	<td>True if the player has an active boost (i.e. they used a boost last turn)</td>
   </tr>
   <tr>
-  	<td>boosts_remaining</td>
+  	<td><b>boosts_remaining</b></td>
 	<td>Integer</td>
 	<td>The number of boosts the player has remaining</td>
   </tr>
   <tr>
-  	<td>orientation</td>
+  	<td><b>orientation</b></td>
 	<td>String</td>
 	<td>The direction the player is facing (North, East, South, West)</td>
   </tr>
@@ -246,22 +246,22 @@ POST /move/{game_id}/{player_id}/{turn}/{boost}/forward.{format}
     <td><b>Value Description</b></td>
   </tr>
   <tr>
-  	<td>requester_position</td>
+  	<td><b>requester_position</b></td>
 	<td>Tuple</td>
 	<td>Your position on the grid</td>
   </tr>
   <tr>
-  	<td>grid</td>
+  	<td><b>grid</b></td>
 	<td>Dictionary</td>
 	<td>Dictionary of the grid and its contents in key-value pairs</td>
   </tr>
   <tr>
-  	<td>player_turn</td>
+  	<td><b>player_turn</b></td>
 	<td>Integer</td>
 	<td>The id of whichever's player's turn it is</td>
   </tr>
   <tr>
-  	<td>orientation</td>
+  	<td><b>orientation</b></td>
 	<td>String</td>
 	<td>The direction the player is facing (North, East, South, West)</td>
   </tr>

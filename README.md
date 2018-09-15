@@ -1,6 +1,5 @@
 # Programming Challenge
 
-<div style="text-align: justify">
 Welcome to the Fall 2018 *** programming challenge! Your task is to create an AI for the
 game Tron Light Cycles. The game will be played in a turn-based fashion where your AI
 will send your actions to the API. Then your opponent (the AI from another participant)
@@ -9,11 +8,9 @@ of matches to determine standing and then a knock-out tournament to determine th
 First in the tournament gets 50 points, second 45 and so on. Then you must make a presentation
 to the panel of judges on your design. They will judge you and award up to 20 points for your 
 presentation. The team with the most points at the end gets to go on to OEC!
-</div>
 
 ## Tron Light Cycle Rules
 
-<div style="text-align: justify">
 Tron takes place in a 130 (horizontal) by 100 (vertical) grid. Player 1 will start at position
 (33,50) facing East and Player 2 will start at position (66,50) facing West (so the two bikes
 start off heading toward one another). Note that North is the direction (x,0), South is (x,100),
@@ -27,7 +24,6 @@ turning 90 degrees (i.e. left or right) and then moving forward a space, or usin
 same direction: no turning mid boost)) and the boost will last until the end of your next turn
 (so, each boost grants 2 turns of 3 space movement). You get 3 boosts per round. You have 10 seconds
 to declare your turn (being late results in forfeiting the round) Each match is a best of 3 rounds.
-</div>
 
 If you've never played Tron, [here is a flash version to try out](https://www.thepcmanwebsite.com/media/flash_tron/)
 
@@ -39,7 +35,7 @@ If you've never played Tron, [here is a flash version to try out](https://www.th
 GET /grid/{game_id}/{player_id}.{format}
 ```
 
-##### Parameters
+#### Parameters
 
 <table>
   <tr>
@@ -70,7 +66,7 @@ GET /grid/{game_id}/{player_id}.{format}
 
 Format options: "json", "xml", OTHERS WE MAY IMPLEMENT
 
-##### Response
+#### Response
 
 <table>
   <tr>
@@ -100,7 +96,7 @@ Format options: "json", "xml", OTHERS WE MAY IMPLEMENT
   </tr>
 </table>
 
-##### Output
+#### Output
 OUTPUT FROM THE ACTUAL THING WE BUILD
 
 ### Retrieve Player Data
@@ -109,7 +105,7 @@ OUTPUT FROM THE ACTUAL THING WE BUILD
 GET /player/{player_number}/{game_id}/data.{format}
 ```
 
-##### Parameters
+#### Parameters
 
 <table>
   <tr>
@@ -140,7 +136,7 @@ GET /player/{player_number}/{game_id}/data.{format}
 
 Format options: "json", "xml", OTHERS WE MAY IMPLEMENT
 
-##### Response
+#### Response
 
 <table>
   <tr>
@@ -185,7 +181,7 @@ Format options: "json", "xml", OTHERS WE MAY IMPLEMENT
   </tr>
 </table>
 
-##### Output
+#### Output
 OUTPUT FROM THE ACTUAL THING WE BUILD
 
 ### Move Your Cycle
@@ -194,7 +190,7 @@ OUTPUT FROM THE ACTUAL THING WE BUILD
 POST /move/{game_id}/{player_id}/{turn}/{boost}/forward.{format}
 ```
 
-##### Parameters
+#### Parameters
 
 <table>
   <tr>
@@ -241,7 +237,7 @@ POST /move/{game_id}/{player_id}/{turn}/{boost}/forward.{format}
   </tr>
 </table>
 
-##### Response
+#### Response
 
 <table>
   <tr>
@@ -276,5 +272,5 @@ POST /move/{game_id}/{player_id}/{turn}/{boost}/forward.{format}
   </tr>
 </table>
 
-##### Output
+#### Output
 OUTPUT FROM THE ACTUAL THING WE BUILD

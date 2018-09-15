@@ -21,9 +21,10 @@ and the round is repeated. When navigating, you do so in a turn-based fashion. Y
 movement to the API (see below for documentation) and you have the options of moving forward one space,
 turning 90 degrees (i.e. left or right) and then moving forward a space, or using a boost then moving
 (same movement rules as above except when you move forward you travel 3 spaces instead of 1 (all in the
-same direction: no turning mid boost)) and the boost will last until the end of your next turn
-(so, each boost grants 2 turns of 3 space movement). You get 3 boosts per round. You have 10 seconds
-to declare your turn (being late results in forfeiting the round) Each match is a best of 3 rounds.
+same direction: you may turn at the begining of your turn but not after, say, moving 2 spaces)) and the
+boost will last until the end of your next turn (so, each boost grants 2 turns of 3 space movement).
+You get 3 boosts per round. You have 10 seconds to declare your turn (being late results in forfeiting
+the round) Each match is a best of 3 rounds.
 
 If you've never played Tron, [here is a flash version to try out](https://www.thepcmanwebsite.com/media/flash_tron/)
 

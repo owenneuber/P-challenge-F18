@@ -14,17 +14,31 @@ game_started = False
 async def start_game(request):
     global game_started
     game_started = True
-    data = {'result' : 'Game started'}
+    logging.info("Starting game")
+    data = {'Result' : 'Game started'}
     return web.json_response(data)
 
+async def stop_game(request):
+    global game_started
+    game_started = False
+    logging.info("Stopping game")
+    data = {"Result" : "Game stopped"}
+    # TODO: reset everything - close conns, reset game state, etc.
+    return web.json_response(data)
 
 # one handler spawned per websocket /connect request
 async def wshandler(request):
-    # TODO: if game is in progress, close connection (do not accept new conns)
     app = request.app
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     app["sockets"].append(ws)
+
+    # If game is in progress, close connection (do not accept new conns)
+    if game_started == True:
+        await ws.send_str("Game in progress, connection rejected")
+        app["sockets"].remove(ws)
+        logging.debug("Closing connection since game is already in progress")
+        return ws
 
     while 1:
         msg = await ws.receive()
@@ -41,7 +55,7 @@ async def wshandler(request):
 
     app["sockets"].remove(ws)
     # TODO: Maybe some more verbose logging upon disconnect (assuming it's accidental)
-    print("Closed connection")
+    logging.debug("Closed connection")
     return ws
 
 # TODO: spawn the player on game board
@@ -70,15 +84,19 @@ async def game_loop(app):
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 
 app = web.Application()
+
 # a list of all the active socket connections
 app["sockets"] = []
+
+# a dictionary of id - move queue pairs
+move_queue_dict = {}
 
 asyncio.ensure_future(game_loop(app))
 
 app.router.add_route('GET', '/connect', wshandler)
-
-# TODO: probably need some sort of auth (shitty secret-based auth?)
-app.router.add_route('POST', '/startGame', start_game)
+# TODO: probably need some sort of auth on this endpoint (shitty secret-based auth?)
+app.router.add_route('GET', '/startGame', start_game)
+app.router.add_route('GET', '/stopGame', stop_game)
 
 
 web.run_app(app)

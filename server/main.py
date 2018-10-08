@@ -67,11 +67,6 @@ async def wshandler(request):
     logging.debug("Closed connection")
     return ws
 
-# TODO: spawn the player on game board
-# TODO: add their move queue to the dictionary
-def add_player():
-    a = 1
-
 # TODO: handle player moves (assess validity, etc.) if game has started
 def handle_request(str):
     a = 1
@@ -88,9 +83,8 @@ async def game_loop(app):
         for ws in app["sockets"]:
             logging.info('Sending game state')
             await ws.send_str(get_json_serialized_game_state())
-        # TODO: iterate through players and check if dead.  If so, report death to corresponding client and perform cleanup.
-
-        # TODO: if game is over, persist results somewhere
+        # TODO: Apply moves then check if any players died.  If so, report to client and to log
+        # TODO: if game is over, persist results somewhere then reset game
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 
 app = web.Application()

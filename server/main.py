@@ -53,8 +53,8 @@ def add_player():
 def handle_request(str):
     a = 1
 
-# TODO: should return a JSON-format string containing the game grid along with positions of
-# walls and other players
+# TODO: should return a JSON-format string containing the game grid along with positions of walls and players
+
 def get_json_serialized_game_state():
     return 'asdf'
 

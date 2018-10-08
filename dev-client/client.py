@@ -13,6 +13,8 @@ async def infinite_pinger():
             'ws://localhost:8080/connect') as websocket:
         while(1):
             await websocket.send('ping')
+            msg = await websocket.recv()
+            print ('Received ' + msg    )
             sleep(1)
 
 

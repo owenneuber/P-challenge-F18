@@ -93,8 +93,8 @@ move_queue_dict = {}
 
 asyncio.ensure_future(game_loop(app))
 
+# TODO: Routes should be authenticated somehow
 app.router.add_route('GET', '/connect', wshandler)
-# TODO: probably need some sort of auth on this endpoint (shitty secret-based auth?)
 app.router.add_route('GET', '/startGame', start_game)
 app.router.add_route('GET', '/stopGame', stop_game)
 

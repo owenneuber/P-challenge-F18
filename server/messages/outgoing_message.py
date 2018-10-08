@@ -1,6 +1,6 @@
 import json
 
-class Message:
+class OutgoingMessage:
     def __init__(self, _type, _message, _status=200):
         self.type = _type
         self.message = _message

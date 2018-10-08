@@ -43,12 +43,12 @@ async def wshandler(request):
 
     while 1:
         msg = await ws.receive()
-        print(msg)
+        logging.debug(msg)
         if msg.type == aiohttp.WSMsgType.TEXT:
             logging.debug("Received message %s" % msg.data)
             handle_request(msg.data)
             # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
-            # return some sort of message that indicates a malformed request
+            # return some sort of message that indicates a malformed requestd
             await ws.send_str("Echo: {}".format(msg.data))
         elif msg.type == aiohttp.WSMsgType.CLOSE or\
             msg.type == aiohttp.WSMsgType.ERROR:
@@ -73,7 +73,8 @@ def handle_request(str):
 def get_json_serialized_game_state():
     return 'asdf'
 
-# This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is active
+# This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is
+# active
 async def game_loop(app):
     while 1:
         for ws in app["sockets"]:

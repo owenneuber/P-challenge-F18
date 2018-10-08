@@ -56,13 +56,14 @@ def handle_request(str):
 # TODO: should return a JSON-format string containing the game grid along with positions of
 # walls and other players
 def get_json_serialized_game_state():
-    a = 1
+    return 'asdf'
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is active
 async def game_loop(app):
     while 1:
         for ws in app["sockets"]:
-            ws.send_str(get_json_serialized_game_state())
+            logging.info('Sending game state')
+            await ws.send_str(get_json_serialized_game_state())
         # TODO: iterate through players and check if dead.  If so, report death to corresponding client and perform cleanup.
 
         # TODO: if game is over, persist results somewhere

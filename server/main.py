@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
+import aiohttp
 from aiohttp import web
 import logging
 
@@ -27,14 +28,15 @@ async def wshandler(request):
 
     while 1:
         msg = await ws.receive()
-        if msg.tp == web.MsgType.text:
+        print(msg)
+        if msg.type == aiohttp.WSMsgType.TEXT:
             logging.debug("Received message %s" % msg.data)
             handle_request(msg.data)
             # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
             # return some sort of message that indicates a malformed request
-            ws.send_str("Echo: {}".format(msg.data))
-        elif msg.tp == web.MsgType.close or\
-            msg.tp == web.MsgType.error:
+            await ws.send_str("Echo: {}".format(msg.data))
+        elif msg.type == aiohttp.WSMsgType.CLOSE or\
+            msg.type == aiohttp.WSMsgType.ERROR:
                 break
 
     app["sockets"].remove(ws)
@@ -46,7 +48,7 @@ async def wshandler(request):
 # TODO: add their move queue to the dictionary
 def add_player():
     a = 1
-    
+
 # TODO: handle player moves (assess validity, etc.) if game has started
 def handle_request(str):
     a = 1
@@ -59,7 +61,6 @@ def get_json_serialized_game_state():
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is active
 async def game_loop(app):
     while 1:
-        logging.info('Game loop iteration')
         for ws in app["sockets"]:
             ws.send_str(get_json_serialized_game_state())
         # TODO: iterate through players and check if dead.  If so, report death to corresponding client and perform cleanup.
@@ -75,7 +76,7 @@ asyncio.ensure_future(game_loop(app))
 
 app.router.add_route('GET', '/connect', wshandler)
 
-# probably need some sort of auth (shitty secret-based auth?)
+# TODO: probably need some sort of auth (shitty secret-based auth?)
 app.router.add_route('POST', '/startGame', start_game)
 
 

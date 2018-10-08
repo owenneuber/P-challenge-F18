@@ -3,28 +3,36 @@
 import asyncio
 import aiohttp
 from aiohttp import web
-import json
 import logging
 
+from server.datastructures.game import Game
+
 GAME_LOOP_INTERVAL_IN_SECONDS = 3
+GAME_GRID_SIZE = 10 # a 10x10 grid
 
 logging.basicConfig(level=logging.INFO)
-game_started = False
+game = Game(GAME_GRID_SIZE)
 
 # HTTP endpoint to start game (i.e. sets game_started as true)
 async def start_game(request):
-    global game_started
-    game_started = True
-    logging.info("Starting game")
-    data = {'Result' : 'Game started'}
+    global game
+    if game.started == False:
+        game.start()
+        logging.info("Starting game")
+        data = {'Result' : 'Game started'}
+    else:
+        data = {"Result" : "Game not started.  Game is already running."}
     return web.json_response(data)
 
 async def stop_game(request):
-    global game_started
-    game_started = False
-    logging.info("Stopping game")
-    data = {"Result" : "Game stopped"}
-    # TODO: reset everything - close conns, reset game state, etc.
+    global game
+    if game.started == True:
+        game.stop()
+        logging.info("Stopping game")
+        data = {"Result" : "Game stopped"}
+        # TODO: reset everything - close conns, reset game state, etc.
+    else:
+        data = {"Result" : "Game not stopped.  Game is not running."}
     return web.json_response(data)
 
 # one handler spawned per websocket /connect request
@@ -35,7 +43,7 @@ async def wshandler(request):
     app["sockets"].append(ws)
 
     # If game is in progress, close connection (do not accept new conns)
-    if game_started == True:
+    if game.started == True:
         await ws.send_str("Game in progress, connection rejected")
         app["sockets"].remove(ws)
         logging.debug("Closing connection since game is already in progress")
@@ -48,7 +56,7 @@ async def wshandler(request):
             logging.debug("Received message %s" % msg.data)
             handle_request(msg.data)
             # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
-            # return some sort of message that indicates a malformed requestd
+            # return some sort of message that indicates a malformed request
             await ws.send_str("Echo: {}".format(msg.data))
         elif msg.type == aiohttp.WSMsgType.CLOSE or\
             msg.type == aiohttp.WSMsgType.ERROR:

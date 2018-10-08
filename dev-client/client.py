@@ -14,7 +14,7 @@ async def infinite_pinger():
         while(1):
             await websocket.send('ping')
             msg = await websocket.recv()
-            print ('Received ' + msg    )
+            print ('Received ' + msg)
             sleep(1)
 
 

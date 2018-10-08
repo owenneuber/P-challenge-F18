@@ -19,7 +19,7 @@ async def start_game(request):
 
 # one handler spawned per websocket /connect request
 async def wshandler(request):
-    # if game is in progress, close connection (do not accept new conns)
+    # TODO: if game is in progress, close connection (do not accept new conns)
     app = request.app
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -30,7 +30,7 @@ async def wshandler(request):
         if msg.tp == web.MsgType.text:
             logging.debug("Received message %s" % msg.data)
             handle_request(msg.data)
-            # Ideally, we send back some sort of response confirming appropriate handling of the request or
+            # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
             # return some sort of message that indicates a malformed request
             ws.send_str("Echo: {}".format(msg.data))
         elif msg.tp == web.MsgType.close or\
@@ -38,22 +38,23 @@ async def wshandler(request):
                 break
 
     app["sockets"].remove(ws)
-    # Maybe some more verbose logging upon disconnect (assuming it's accidental)
+    # TODO: Maybe some more verbose logging upon disconnect (assuming it's accidental)
     print("Closed connection")
     return ws
 
-# spawn the player on game board
-# add their move queue to the dictionary
+# TODO: spawn the player on game board
+# TODO: add their move queue to the dictionary
 def add_player():
-
-# handle player moves (assess validity, etc.) if game has started
+    a = 1
+    
+# TODO: handle player moves (assess validity, etc.) if game has started
 def handle_request(str):
+    a = 1
 
-
-# should return a JSON-format string containing the game grid along with positions of
+# TODO: should return a JSON-format string containing the game grid along with positions of
 # walls and other players
 def get_json_serialized_game_state():
-
+    a = 1
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is active
 async def game_loop(app):
@@ -61,9 +62,9 @@ async def game_loop(app):
         logging.info('Game loop iteration')
         for ws in app["sockets"]:
             ws.send_str(get_json_serialized_game_state())
-        # iterate through players and check if dead.  If so, report death to corresponding client and perform cleanup.
+        # TODO: iterate through players and check if dead.  If so, report death to corresponding client and perform cleanup.
 
-        # if game is over, persist results somewhere
+        # TODO: if game is over, persist results somewhere
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 
 app = web.Application()

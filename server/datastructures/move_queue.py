@@ -1,6 +1,5 @@
 # Each client player should have a move queue.  Every move sent from a client should be appended to the queue.
 # The periodic move task (every 1 second) will flush the oldest move from the queue
-
 import queue
 
 class MoveQueue:

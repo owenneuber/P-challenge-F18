@@ -63,8 +63,7 @@ async def wshandler(request):
                 break
 
     app["sockets"].remove(ws)
-    # TODO: Maybe some more verbose logging upon disconnect (assuming it's accidental)
-    logging.debug("Closed connection")
+    logging.debug("Closed connection.")
     return ws
 
 # TODO: handle player moves (assess validity, etc.) if game has started
@@ -72,9 +71,8 @@ def handle_request(str):
     a = 1
 
 # TODO: should return a JSON-format string containing the game grid along with positions of walls and players
-
 def get_json_serialized_game_state():
-    return 'asdf'
+    return "asdf"
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is
 # active

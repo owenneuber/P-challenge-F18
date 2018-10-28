@@ -4,8 +4,9 @@ import asyncio
 import aiohttp
 from aiohttp import web
 import logging
+import json
 
-from server.datastructures.game import Game
+from datastructures.game import Game
 
 GAME_LOOP_INTERVAL_IN_SECONDS = 3
 GAME_GRID_SIZE = 10 # a 10x10 grid
@@ -72,7 +73,8 @@ def handle_request(str):
 
 # TODO: should return a JSON-format string containing the game grid along with positions of walls and players
 def get_json_serialized_game_state():
-    return "asdf"
+    global game
+    return json.dumps(game.game_grid)
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is
 # active

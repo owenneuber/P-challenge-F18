@@ -18,15 +18,15 @@ engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db')
 Session = sessionmaker(bind=engine) #need to execute these lines to create a queriable session (for local testing)
 session = Session()
 """
-class Game_state(Base): # Keeps track of all current and past gamestates of all games
+class Game_state(Base): # Keeps track of all current and (if we want) past gamestates of all games
     __tablename__ = 'Game_state'
     
     id = Column(Integer, primary_key=True)
-    game_id = Column(Integer, ForeignKey('Game.id'), nullable=False) #The ID of the game this gamestate corresponds to
+    game_id = Column(Integer, ForeignKey('Games.id'), nullable=False) #The ID of the game this gamestate corresponds to
     turn = Column(Integer, nullable=False) #tells you the turn the current gamestate corresponds to
     game_state = Column(JSON)
     time_stamp = Column(DateTime)
-    game = relationship('Game', backref=backref('Game_state', lazy='dynamic', cascade='all,delete'))
+    games = relationship('Games', backref=backref('Game_state', lazy='dynamic', cascade='all,delete'))
     
     def __repr__(self):
         return '<Game_state(id: {id}, game_id: {game_id}, turn: {turn}, time_stamp: {time_stamp})>'.format(
@@ -36,17 +36,17 @@ class Game_state(Base): # Keeps track of all current and past gamestates of all 
             time_stamp=self.time_stamp)
             
         
-class Game(Base): # Keep track of our matches as an overview: who is playing who, is it done, who won?
-    __tablename__ = 'Game'
+class Games(Base): # Keep track of our matches as an overview: who is playing who, is it done, who won?
+    __tablename__ = 'Games'
     
     id = Column(Integer, primary_key=True)    
-    team1_id = Column(Integer, nullable=False)
-    team2_id = Column(Integer, nullable=False)
+    team1_id = Column(Integer)
+    team2_id = Column(Integer)
     is_complete = Column(Boolean, default=False) # has the game finished or not?
     victor = Column(String, default=None) # the winning team's ID should go in this column
     
     def __repr__(self): #returns the name of the contig, it's length, and its genome of origin
-        return '<Game(game number: {0}, team 1 ID: {1}, team 2 ID: {2}, game completed: {3}, victor: {4})>'.format(
+        return '<Games(game number: {0}, team 1 ID: {1}, team 2 ID: {2}, game completed: {3}, victor: {4})>'.format(
                 self.id, 
                 self.team1_id, 
                 self.team2_id, 

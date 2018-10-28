@@ -26,9 +26,9 @@ class Game:
     def spawn_player(self, _size, player):
         row = int(_size/2)
         col = int(_size/4)
-        if self.game_grid[(row,col)] != "": #if the first player has already been put in
+        if self.game_grid[str(row)+","+str(col)] != "": #if the first player has already been put in
             col *= 3
-        self.game_grid.update({(row,col):player})
+        self.game_grid.update({str(row)+","+str(col):player})
 
     def start(self):
         self.started = True

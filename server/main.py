@@ -84,6 +84,7 @@ async def game_loop(app):
             logging.info('Sending game state')
             await ws.send_str(get_json_serialized_game_state())
         # TODO: Apply moves then check if any players died.  If so, report to client and to log
+
         # TODO: if game is over, persist results somewhere then reset game
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 

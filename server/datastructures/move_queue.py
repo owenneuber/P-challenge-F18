@@ -12,5 +12,5 @@ class MoveQueue:
     def add_move(self, move):
         self.moveQueue.put(move)
 
-    def pop_oldest_move(self):
+    def dequeue_oldest_move(self):
         return self.moveQueue.get()

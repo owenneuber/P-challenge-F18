@@ -26,9 +26,9 @@ class Game:
         self.started = False
         self._size = _size
         
-        ############## creat DB session and add game to it
-        engine = engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db') 
-        Session = sessionmaker(bind=engine) #need to execute these lines to create a queriable session
+        ############## create DB session and add game to it
+        engine = engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db')
+        Session = sessionmaker(bind=engine) # need to execute these lines to create a queriable session
         self.session = Session()
         try:
             self.current_game = Games(team1_id=None,team2_id=None)
@@ -77,8 +77,8 @@ class Game:
         self.started = False
         
     def update_game_state(self, update):
-        """ Updates the game_grid with the imputed update variable. update should
-        be a dictionary containing as many updates as desired (separated by commans) in the format:
+        """ Updates the game_grid with the inputed update variable. update should
+        be a dictionary containing as many updates as desired (separated by commas) in the format:
         {"i,j":val, "1,2":"P2", ...} where i and j are the row and column position to be updated
         and val is the new string value to give that position. """
         self.game_grid.update(update)

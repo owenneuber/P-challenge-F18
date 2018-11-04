@@ -71,14 +71,16 @@ async def wshandler(request):
         if msg.type == aiohttp.WSMsgType.TEXT:
             logging.debug("Received message %s" % msg.data)
             serialized_data = json.loads(msg.data)
-            
-            if not validate_team(serialized_data["team_id"], serialized_data["token"]): # check if team is who they say they are
+
+            if not validate_team(serialized_data["team_id"], serialized_data["authenticationKey"]): # check if team is who they say they are
                 logging.info("Team id and/or token invalid")
                 await ws.send_str("The team id and/or token you provided is invalid.")
                 break
             logging.debug("Team number %s validated" % serialized_data["team_id"])
             
-            handle_request(msg.data)
+            handle_request(serialized_data)
+            # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
+            # return some sort of message that indicates a malformed request
             await ws.send_str("Echo: {}".format(msg.data))
         elif msg.type == aiohttp.WSMsgType.CLOSE or\
             msg.type == aiohttp.WSMsgType.ERROR:
@@ -88,30 +90,91 @@ async def wshandler(request):
     logging.debug("Closed connection.")
     return ws
 
-# TODO: handle player moves (assess validity, etc.) if game has started
-def handle_request(msg):
-    messageDict = json.loads(msg)
-    if "type" in messageDict and "message" in messageDict and "authenticationKey" in messageDict:
-        if messageDict["type"] == "Registration":
-            pass
-        elif messageDict["type"] == "Move":
-            pass
-        else :
-            logging.info("Message with invalid type received: " + msg)
-    else:
-        logging.info("Malformed message received: " + msg)
-        return
 
+    
+def move_from_to(messageDict):
+    """Takes in the message of a user who is moving and returns the grid position
+    they started in and the one they intend to move to (in a tuple). """
+    global game
+    team_id = int(messageDict["team_id"])
+    move_direction = messageDict["message"].upper()
+    original_position = list(game.game_grid.keys())[list(game.game_grid.values()).index(team_id)] # "row,column"
+    new_position = list(map(int, original_position.split(","))) # [int(row), int(column)]
+    if move_direction == "UP":
+        new_position[0] -= 1
+    elif move_direction == "DOWN":
+        new_position[0] += 1
+    if move_direction == "RIGHT":
+        new_position[1] += 1
+    elif move_direction == "LEFT":
+        new_position[1] -= 1
+    return (original_position, str(new_position[0]) +","+ str(new_position[1])) # return ("row1,column1", "row2,column2")
+
+# TODO: handle player moves (assess validity, etc.) if game has started
+# TODO: check if move is legal (i.e. they didn't jump a space and the space they want exists)
+def handle_request(messageDict):
+    global game
+    global session
+    if "type" in messageDict and "message" in messageDict and "authenticationKey" in messageDict:
+        if messageDict["type"].upper() == "REGISTRATION":
+            game.spawn_player(int(messageDict["team_id"]))
+        # TODO: test the below
+        # TODO: this handles one player's requests. must ensure other player moves in parallel somehow
+        elif messageDict["type"].upper() == "MOVE":
+            start, moving_to = move_from_to(messageDict)
+            if game.game_grid[moving_to] != "":
+                # the player is dead
+                game.current_game.is_complete = True
+                if game.game_grid[moving_to] != "wall" and game.game_grid[moving_to] != "trail":
+                    # both player collided, neither player gets a win
+                    # TODO: make sure its isn't triggered by one team hitting the trail of the other 
+                    # team by one space (i.e. as the other team was moving out of the way)
+                    game.current_game.victor = None
+                    logging.info("Both player collided, neither gets a win")
+                else:
+                    # the other player won
+                    if game.current_game.team1_id == int(messageDict["team_id"]): # if we are team1, the other team won
+                        game.current_game.victor = game.current_game.team2_id
+                        team = session.query(Teams).filter_by(team_id=game.current_game.team2_id).first()
+                    else:
+                        game.current_game.victor = game.current_game.team1_id
+                        team = session.query(Teams).filter_by(team_id=game.current_game.team1_id).first()
+                    logging.info("Team " +str(game.current_game.victor) + " won the match")
+                    team.games_won += 1
+                    session.add(team)
+                game.stop()
+                try:
+                    session.add(game.current_game)
+                    session.commit()
+                except Exception as e:
+                    logging.debug(e)
+                    session.rollback()
+                
+            else: # neither player died so move the player as requested and set their old position as "trail"
+                game.update_game_state({start:"trail",moving_to:messageDict["team_id"]})
+                
+        else:
+            logging.info("Message with invalid type received: " + messageDict)
+    else:
+        logging.info("Malformed message received: " + messageDict)
+        return
+    
 def get_json_serialized_game_state():
     global game
+    if game.current_game.is_complete == True:
+        return("Team " +str(game.current_game.victor) + " won the match")
     return json.dumps(game.game_grid)
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is
 # active
 async def game_loop(app):
+    global game
     while 1:
-        # TODO: Apply moves then check if any players died.  If so, report to client and to log
-
+        for ws in app["sockets"]:
+                        
+            logging.info('Sending game state')
+            await ws.send_str(get_json_serialized_game_state())
+            
         # TODO: if game is over, persist results somewhere then reset game
         for ws in app["sockets"]:
             logging.info("Sending game state")

@@ -21,7 +21,7 @@ engine = engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db')
 Session = sessionmaker(bind=engine)
 session = Session() # session to use in functions which need it
 
-def vaidate_team(team_id, token):
+def validate_team(team_id, token):
     """ Returns True if the team is who they claim to be, False if not. """
     global session
     team = session.query(Teams).filter_by(team_id=team_id).first()
@@ -72,7 +72,7 @@ async def wshandler(request):
             logging.debug("Received message %s" % msg.data)
             serialized_data = json.loads(msg.data)
             
-            if not vaidate_team(serialized_data["team_id"], serialized_data["token"]): # check if team is who they say they are
+            if not validate_team(serialized_data["team_id"], serialized_data["token"]): # check if team is who they say they are
                 logging.info("Team id and/or token invalid")
                 await ws.send_str("The team id and/or token you provided is invalid.")
                 break

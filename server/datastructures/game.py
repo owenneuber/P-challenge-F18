@@ -57,9 +57,13 @@ class Game:
                 self.current_game.team1_id = team_id
             else:
                 self.current_game.team2_id = team_id
+            team = self.session.query(Teams).filter_by(team_id=team_id).first()
+            team.games_played += 1
             self.game_state.game_state = self.game_grid
             self.session.add(self.current_game)
             self.session.add(self.game_state)
+            self.session.add(team)
+            self.session.commit()
         except Exception as e:
             self.session.rollback()
             print(e)
@@ -73,13 +77,13 @@ class Game:
         self.started = False
 
     def reset_game(self):
-        self.game_grid = self.build_grid(_size)
+        self.game_grid = self.build_grid(self._size)
         self.started = False
         
     def update_game_state(self, update):
         """ Updates the game_grid with the inputed update variable. update should
         be a dictionary containing as many updates as desired (separated by commas) in the format:
-        {"i,j":val, "1,2":"team_id", ...} where i and j are the row and column position to be updated
+        {"i,j":val, "1,2":team_id, ...} where i and j are the row and column position to be updated
         and val is the new string value to give that position. """
         self.game_grid.update(update)
         ##################

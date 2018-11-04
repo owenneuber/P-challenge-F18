@@ -2,7 +2,8 @@
 {
   "type":"REGISTRATION",
   "message":"",
-  "authenticationKey":"{YOUR KEY}"
+  "authenticationKey":"<YOUR KEY>"
+  "team_id":"<YOUR TEAM ID>"
 }
 
 
@@ -11,5 +12,6 @@
 {
     "type":"MOVE",
     "message":"DOWN",
-    "authenticationKey":"{YOUR KEY}"
+    "authenticationKey":"<YOUR KEY>"
+    "team_id":"<YOUR TEAM ID>"
 }

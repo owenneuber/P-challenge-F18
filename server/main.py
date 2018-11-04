@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import asyncio
+import sys
+
 import aiohttp
 from aiohttp import web
 import logging
@@ -94,19 +96,17 @@ async def wshandler(request):
 
 
     
-def move_from_to(messageDict):
+def move_from_to(team_id, move_direction):
     """Takes in the message of a user who is moving and returns the grid position
     they started in and the one they intend to move to (in a tuple). """
     global game
-    team_id = int(messageDict["team_id"])
-    move_direction = messageDict["message"].upper()
     original_position = list(game.game_grid.keys())[list(game.game_grid.values()).index(team_id)] # "row,column"
     new_position = list(map(int, original_position.split(","))) # [int(row), int(column)]
     if move_direction == "UP":
         new_position[0] -= 1
     elif move_direction == "DOWN":
         new_position[0] += 1
-    if move_direction == "RIGHT":
+    elif move_direction == "RIGHT":
         new_position[1] += 1
     elif move_direction == "LEFT":
         new_position[1] -= 1
@@ -137,7 +137,7 @@ def handle_request(messageDict):
 def get_json_serialized_game_state():
     global game
     if game.current_game.is_complete == True:
-        return("Team " +str(game.current_game.victor) + " won the match")
+        return("Game Complete: Team " +str(game.current_game.victor) + " won the match")
     return json.dumps(game.game_grid)
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is
@@ -147,11 +147,78 @@ async def game_loop(app):
     global session
     while 1:
         if game.started:
+            apply_moves()
+            json_game_state = get_json_serialized_game_state()
+            if "Game Complete" not in json_game_state:
+                print_game_state(get_json_serialized_game_state())
             for ws in app["sockets"]:
                 logging.info('Sending game state')
                 await ws.send_str(get_json_serialized_game_state())
-            # TODO: if game is over, persist results somewhere then reset game
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
+
+def print_game_state(game_state_json):
+    game_state_dict = json.loads(game_state_json)
+    game_arr = []
+    for i in range(0, 12):
+        new = []
+        for j in range(0, 12):
+            new.append("")
+        game_arr.append(new)
+
+    for key in game_state_dict:
+        pair = key.split(",")
+        row = int(pair[0])
+        col = int(pair[1])
+        game_arr[row][col] = (game_state_dict[key])
+
+    for i in range(0, 12):
+        for j in range(0, 12):
+            val = game_arr[i][j]
+            if val == "":
+                sys.stdout.write("0")
+            elif val == "wall":
+                sys.stdout.write("W")
+            elif val == "trail":
+                sys.stdout.write("T")
+            else:
+                sys.stdout.write(str(val))
+        print("")
+
+def apply_moves():
+    for team_id in move_queue_dict:
+        team_id = int(team_id)
+        queue = move_queue_dict[team_id]
+        start, moving_to = move_from_to(team_id, queue.dequeue_oldest_move().upper())
+        if game.game_grid[moving_to] != "":
+            # the player is dead
+            game.current_game.is_complete = True
+            if game.game_grid[moving_to] != "wall" and game.game_grid[moving_to] != "trail":
+                # both player collided, neither player gets a win
+                # TODO: make sure its isn't triggered by one team hitting the trail of the other
+                # team by one space (i.e. as the other team was moving out of the way)
+                game.current_game.victor = None
+                logging.info("Both player collided, neither gets a win")
+            else:
+                # the other player won
+                if game.current_game.team1_id == team_id:  # if we are team1, the other team won
+                    game.current_game.victor = game.current_game.team2_id
+                    team = session.query(Teams).filter_by(team_id=game.current_game.team2_id).first()
+                else:
+                    game.current_game.victor = game.current_game.team1_id
+                    team = session.query(Teams).filter_by(team_id=game.current_game.team1_id).first()
+                logging.info("Team " + str(game.current_game.victor) + " won the match")
+                team.games_won += 1
+                session.add(team)
+            game.stop()
+            try:
+                session.add(game.current_game)
+                session.commit()
+            except Exception as e:
+                logging.debug(e)
+                session.rollback()
+
+        else:  # neither player died so move the player as requested and set their old position as "trail"
+            game.update_game_state({start: "trail", moving_to: team_id})
 
 app = web.Application()
 
@@ -163,10 +230,11 @@ move_queue_dict = {}
 
 asyncio.ensure_future(game_loop(app))
 
-# TODO: Routes should be authenticated somehow
 app.router.add_route("GET", "/connect", wshandler)
 app.router.add_route("GET", "/startGame", start_game)
 app.router.add_route("GET", "/stopGame", stop_game)
 
 
 web.run_app(app)
+
+# TODO: disconnects should be handled

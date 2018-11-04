@@ -5,6 +5,7 @@
 from .models import Games, Game_state, Teams
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import logging
 
 class Game:
     def build_grid(self, _size): 
@@ -45,11 +46,12 @@ class Game:
 
     def spawn_player(self, team_id):
         row = int(self._size/2)
-        col = int(self._size/4)
+        col = 2
         position = 1
         if self.game_grid[str(row)+","+str(col)] != "": #if the first player has already been put in
-            col *= 3
+            col = self._size - 1
             position = 2
+        logging.info("Player " + str(team_id) + " spawned at " + str(row) + ","  + str(col))
         self.game_grid.update({str(row)+","+str(col):team_id})
         ##################
         try:

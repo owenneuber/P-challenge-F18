@@ -5,6 +5,9 @@ import aiohttp
 from aiohttp import web
 import logging
 import json
+from datastructures.models import Teams
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from datastructures.game import Game
 
@@ -13,6 +16,18 @@ GAME_GRID_SIZE = 10 # a 10x10 grid
 
 logging.basicConfig(level=logging.INFO)
 game = Game(GAME_GRID_SIZE)
+
+engine = engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db') 
+Session = sessionmaker(bind=engine)
+session = Session() # session to use in functions which need it
+
+def vaidate_team(team_id, token):
+    """ Returns True if the team is who they claim to be, False if not. """
+    global session
+    team = session.query(Teams).filter_by(team_id=team_id).first()
+    if team == None: # i.e. the provided team id does not exist in the db
+        return False
+    return team.team_key == token
 
 # HTTP endpoint to start game (i.e. sets game_started as true)
 async def start_game(request):
@@ -55,6 +70,14 @@ async def wshandler(request):
         logging.debug(msg)
         if msg.type == aiohttp.WSMsgType.TEXT:
             logging.debug("Received message %s" % msg.data)
+            serialized_data = json.loads(msg.data)
+            
+            if not vaidate_team(serialized_data["team_id"], serialized_data["token"]): # check if team is who they say they are
+                logging.info("Team id and/or token invalid")
+                await ws.send_str("The team id and/or token you provided is invalid.")
+                break
+            logging.debug("Team number %s validated" % serialized_data["team_id"])
+            
             handle_request(msg.data)
             # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
             # return some sort of message that indicates a malformed request

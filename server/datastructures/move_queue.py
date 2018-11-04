@@ -14,3 +14,7 @@ class MoveQueue:
 
     def dequeue_oldest_move(self):
         return self.moveQueue.get()
+
+    def print(self):
+        for elem in list(self.moveQueue.queue):
+            print(elem)

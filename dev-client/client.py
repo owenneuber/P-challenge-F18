@@ -11,8 +11,9 @@ from time import sleep
 async def infinite_pinger():
     async with websockets.connect(
             'ws://localhost:8080/connect') as websocket:
+        await websocket.send("{\"type\":\"REGISTRATION\",\"message\":\"\",\"authenticationKey\":\"{SOME KEY}\"}")
         while(1):
-            await websocket.send('ping')
+            websocket.send()
             msg = await websocket.recv()
             print ('Received ' + msg)
             sleep(1)

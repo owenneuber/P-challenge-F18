@@ -1,0 +1,15 @@
+/** Registration **/
+{
+  "type":"REGISTRATION",
+  "message":"",
+  "authenticationKey":"{YOUR KEY}"
+}
+
+
+/** Move **/
+// Move message can be UP, DOWN, LEFT, or RIGHT
+{
+    "type":"MOVE",
+    "message":"DOWN",
+    "authenticationKey":"{YOUR KEY}"
+}

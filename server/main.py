@@ -9,7 +9,7 @@ import json
 from datastructures.game import Game
 
 GAME_LOOP_INTERVAL_IN_SECONDS = 3
-GAME_GRID_SIZE = 10 # a 10x10 grid
+GAME_GRID_SIZE = 10
 
 logging.basicConfig(level=logging.INFO)
 game = Game(GAME_GRID_SIZE)
@@ -20,7 +20,7 @@ async def start_game(request):
     if game.started == False:
         game.start()
         logging.info("Starting game")
-        data = {'Result' : 'Game started'}
+        data = {"Result" : "Game started"}
     else:
         data = {"Result" : "Game not started.  Game is already running."}
     return web.json_response(data)
@@ -56,8 +56,6 @@ async def wshandler(request):
         if msg.type == aiohttp.WSMsgType.TEXT:
             logging.debug("Received message %s" % msg.data)
             handle_request(msg.data)
-            # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
-            # return some sort of message that indicates a malformed request
             await ws.send_str("Echo: {}".format(msg.data))
         elif msg.type == aiohttp.WSMsgType.CLOSE or\
             msg.type == aiohttp.WSMsgType.ERROR:
@@ -68,10 +66,19 @@ async def wshandler(request):
     return ws
 
 # TODO: handle player moves (assess validity, etc.) if game has started
-def handle_request(str):
-    a = 1
+def handle_request(msg):
+    messageDict = json.loads(msg)
+    if "type" in messageDict and "message" in messageDict and "authenticationKey" in messageDict:
+        if messageDict["type"] == "Registration":
+            pass
+        elif messageDict["type"] == "Move":
+            pass
+        else :
+            logging.info("Message with invalid type received: " + msg)
+    else:
+        logging.info("Malformed message received: " + msg)
+        return
 
-# TODO: should return a JSON-format string containing the game grid along with positions of walls and players
 def get_json_serialized_game_state():
     global game
     return json.dumps(game.game_grid)
@@ -80,12 +87,12 @@ def get_json_serialized_game_state():
 # active
 async def game_loop(app):
     while 1:
-        for ws in app["sockets"]:
-            logging.info('Sending game state')
-            await ws.send_str(get_json_serialized_game_state())
         # TODO: Apply moves then check if any players died.  If so, report to client and to log
 
         # TODO: if game is over, persist results somewhere then reset game
+        for ws in app["sockets"]:
+            logging.info("Sending game state")
+            await ws.send_str(get_json_serialized_game_state())
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 
 app = web.Application()
@@ -99,9 +106,9 @@ move_queue_dict = {}
 asyncio.ensure_future(game_loop(app))
 
 # TODO: Routes should be authenticated somehow
-app.router.add_route('GET', '/connect', wshandler)
-app.router.add_route('GET', '/startGame', start_game)
-app.router.add_route('GET', '/stopGame', stop_game)
+app.router.add_route("GET", "/connect", wshandler)
+app.router.add_route("GET", "/startGame", start_game)
+app.router.add_route("GET", "/stopGame", stop_game)
 
 
 web.run_app(app)

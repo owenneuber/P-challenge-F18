@@ -10,7 +10,7 @@ class Game:
     def build_grid(self, _size): 
         """ Build a dictionary grid. The key will be a position string (e.g. "1,1")
         the value will be what is occupying the space (options for that are:
-        'wall', player_id1, player_id2, 'trail, and '' (for nothing)."""
+        'wall', player_id1, player_id2, 'trail', and '' (for nothing)."""
         _size += 2 # to allow for walls to be added on the periphery
         game_grid = {}
         for i in range(_size):
@@ -79,7 +79,7 @@ class Game:
     def update_game_state(self, update):
         """ Updates the game_grid with the inputed update variable. update should
         be a dictionary containing as many updates as desired (separated by commas) in the format:
-        {"i,j":val, "1,2":"P2", ...} where i and j are the row and column position to be updated
+        {"i,j":val, "1,2":"team_id", ...} where i and j are the row and column position to be updated
         and val is the new string value to give that position. """
         self.game_grid.update(update)
         ##################

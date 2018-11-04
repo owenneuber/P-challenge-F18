@@ -14,7 +14,7 @@ async def infinite_pinger():
             'ws://localhost:8080/connect') as websocket:
         while(1):
             #data = "ping"
-            data = {"team_id":1,"token":"c3f2a2ea7adf31cbd1809c9439408f0141f24cb6"}
+            data = {"team_id":1,"token":"c3f2a2ea7adf31cbd1809c9439408f0141f24cb6", "move_to":"5,4"}
             # the above is valid for my local database, change for yours as needed
             await websocket.send(json.dumps(data))
             msg = await websocket.recv()

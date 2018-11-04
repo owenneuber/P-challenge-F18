@@ -78,7 +78,7 @@ async def wshandler(request):
                 break
             logging.debug("Team number %s validated" % serialized_data["team_id"])
             
-            handle_request(msg.data)
+            handle_request(serialized_data)
             # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
             # return some sort of message that indicates a malformed request
             await ws.send_str("Echo: {}".format(msg.data))
@@ -91,23 +91,27 @@ async def wshandler(request):
     return ws
 
 # TODO: handle player moves (assess validity, etc.) if game has started
-def handle_request(str):
-    a = 1
+def handle_request(data):
+    
+            
 
 # TODO: should return a JSON-format string containing the game grid along with positions of walls and players
 def get_json_serialized_game_state():
     global game
+    if game.current_game.is_complete == True:
+        return("Team " +str(game.current_game.victor) + " won the match")
     return json.dumps(game.game_grid)
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is
 # active
 async def game_loop(app):
+    global game
     while 1:
         for ws in app["sockets"]:
+                        
             logging.info('Sending game state')
             await ws.send_str(get_json_serialized_game_state())
-        # TODO: Apply moves then check if any players died.  If so, report to client and to log
-
+            
         # TODO: if game is over, persist results somewhere then reset game
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 

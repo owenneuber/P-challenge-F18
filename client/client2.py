@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 
-# we should have some util functions for testing websocket stuff
-
 import asyncio
 import websockets
 from time import sleep
 import json
-
-# A shitty function that pings the server on loop
 
 async def happy_path():
     async with websockets.connect(
@@ -35,7 +31,5 @@ async def happy_path():
         while(1):
             msg = await websocket.recv()
             print ('Received: ' + msg)
-            sleep(1)
-
 
 asyncio.get_event_loop().run_until_complete(happy_path())

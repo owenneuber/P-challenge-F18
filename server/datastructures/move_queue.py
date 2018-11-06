@@ -17,7 +17,7 @@ class MoveQueue:
             logging.info("Defaulting to UP")
             return "UP" # default to UP if the queue is empty
         move = self.moveQueue.get()
-        logging.info(str(move))
+        logging.info("Team %s executes %s move." % (self.teamId, str(move)))
         return move
 
     def print(self):

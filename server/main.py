@@ -36,7 +36,7 @@ def validate_team(team_id, token):
 # HTTP endpoint to start game (i.e. sets game_started as true)
 async def start_game(request):
     global game
-    if game.started == False and len(app["sockets"]) == 2:
+    if game.started == False and len(move_queue_dict) == 2:
         game.start()
         logging.info("Starting game")
         data = {"Result" : "Game started"}
@@ -66,23 +66,21 @@ async def wshandler(request):
     if game.started == True:
         await ws.send_str("Game in progress, connection rejected")
         app["sockets"].remove(ws)
-        logging.debug("Closing connection since game is already in progress")
+        logging.info("Closing connection since game is already in progress")
         return ws
 
     while 1:
         msg = await ws.receive()
-        logging.debug(msg)
         if msg.type == aiohttp.WSMsgType.TEXT:
-            logging.debug("Received message %s" % msg.data)
-            serialized_data = json.loads(msg.data)
-
-            if not validate_team(serialized_data["team_id"], serialized_data["authenticationKey"]): # check if team is who they say they are
+            logging.info("Received message %s" % msg.data)
+            deserialized_data = json.loads(msg.data)
+            if not validate_team(deserialized_data["team_id"], deserialized_data["authenticationKey"]): # check if team is who they say they are
                 logging.info("Team id and/or token invalid")
                 await ws.send_str("The team id and/or token you provided is invalid.")
                 break
-            logging.debug("Team number %s validated" % serialized_data["team_id"])
+            logging.info("Team number %s validated" % deserialized_data["team_id"])
             try:
-                handle_request(serialized_data)
+                handle_request(deserialized_data)
                 await ws.send_str("Echo: {}".format(msg.data))
             except ValueError as e:
                 await ws.send_str("Invalid input.  Reason: " + e.args[0])
@@ -91,11 +89,11 @@ async def wshandler(request):
             msg.type == aiohttp.WSMsgType.ERROR:
                 break
     app["sockets"].remove(ws)
-    logging.debug("Closed connection.")
+    logging.info("Closed connection.")
     return ws
 
 
-    
+
 def move_from_to(team_id, move_direction):
     """Takes in the message of a user who is moving and returns the grid position
     they started in and the one they intend to move to (in a tuple). """
@@ -112,39 +110,38 @@ def move_from_to(team_id, move_direction):
         new_position[1] -= 1
     return (original_position, str(new_position[0]) +","+ str(new_position[1])) # return ("row1,column1", "row2,column2")
 
-# TODO: handle player moves (assess validity, etc.) if game has started
-# TODO: check if move is legal (i.e. they didn't jump a space and the space they want exists)
 def handle_request(messageDict):
     global game
     global session
     if "type" in messageDict and "message" in messageDict and "team_id" in messageDict and "authenticationKey" in messageDict:
         if messageDict["type"].upper() == "REGISTRATION":
-            game.spawn_player(int(messageDict["team_id"]))
-            move_queue_dict[messageDict["team_id"]] = MoveQueue(messageDict["team_id"])
-        # TODO: test the below
-        # TODO: this handles one player's requests. must ensure other player moves in parallel somehow
+            if int(messageDict["team_id"]) not in move_queue_dict:
+                game.spawn_player(int(messageDict["team_id"]))
+                move_queue_dict[messageDict["team_id"]] = MoveQueue(int(messageDict["team_id"]))
+            else:
+                raise ValueError("Player already registered")
         elif messageDict["type"].upper() == "MOVE":
             if messageDict["team_id"] not in move_queue_dict:
                 logging.info("Unregistered team tried to submit a move.")
                 raise ValueError("Unregistered team " + messageDict["team_id"] + " tried to submit a move.")
             elif messageDict["message"].upper() not in ("UP", "DOWN", "LEFT", "RIGHT"):
-                logging.info("Invalid move received " + messageDict["message"])
+                logging.info("Invalid move %s received " % messageDict["message"])
                 raise ValueError("Invalid move " + messageDict["message"] + " received.")
             else:
+                logging.info("Received move %s from team %s." % (messageDict["message"], messageDict["team_id"]))
                 move_queue_dict[messageDict["team_id"]].add_move(messageDict["message"].upper())
         else:
-            logging.info("Message with invalid type received: " + messageDict)
+            logging.info("Message with invalid type received: " + json.dumps(messageDict))
             raise ValueError("Message with invalid type " + messageDict["type"] + " received.")
     else:
-        logging.info("Message with invalid field received: " + messageDict)
-        raise ValueError("Message with invalid field received.")
-
+        logging.info("Message with missing field received: " + json.dumps(messageDict))
+        raise ValueError("Message with missing field received.")
     return
-    
+
 def get_json_serialized_game_state():
     global game
     if game.current_game.is_complete == True:
-        return("Game Complete: Team " +str(game.current_game.victor) + " won the match")
+        return ("Game Complete: Team " + str(game.current_game.victor) + " won the match")
     return json.dumps(game.game_grid)
 
 # This game loop will run infinitely and will periodically send back a JSON string summarizing game state if game is
@@ -159,7 +156,6 @@ async def game_loop(app):
             if "Game Complete" not in json_game_state:
                 print_game_state(get_json_serialized_game_state())
             for ws in app["sockets"]:
-                logging.info('Sending game state')
                 await ws.send_str(get_json_serialized_game_state())
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 
@@ -221,7 +217,7 @@ def apply_moves():
                 session.add(game.current_game)
                 session.commit()
             except Exception as e:
-                logging.debug(e)
+                logging.info(e)
                 session.rollback()
 
         else:  # neither player died so move the player as requested and set their old position as "trail"

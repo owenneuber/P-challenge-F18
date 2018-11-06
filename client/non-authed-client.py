@@ -12,13 +12,10 @@ import json
 async def invalid_messages():
     async with websockets.connect(
             'ws://localhost:8080/connect') as websocket:
-        data = {"team_id":2,"authenticationKey":"team2key","type":"REGISTRATION","message":""}
+        data = {"team_id":2,"authenticationKey":"invalidkey","type":"REGISTRATION","message":""}
         await websocket.send(json.dumps(data))
-        data = {"team_id":2, "authenticationKey": "team2key", "type": "INVALID-TYPE",
-                "message": "LEFT"}
+        data = {"team_id":2, "authenticationKey": "invalidkey", "type": "MOVE", "message": "LEFT"}
         await websocket.send(json.dumps(data))
-        data = {"team_id":2, "authenticationKey": "team2key", "type": "MOVE",
-                "message": "INVALID-MOVE"}
         while(1):
             msg = await websocket.recv()
             print ('Received: %s' % msg)

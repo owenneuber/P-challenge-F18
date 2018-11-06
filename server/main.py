@@ -81,15 +81,17 @@ async def wshandler(request):
                 await ws.send_str("The team id and/or token you provided is invalid.")
                 break
             logging.debug("Team number %s validated" % serialized_data["team_id"])
-            
-            handle_request(serialized_data)
+            try:
+                handle_request(serialized_data)
+                await ws.send_str("Echo: {}".format(msg.data))
+            except ValueError as e:
+                await ws.send_str("Invalid input.  Reason: " + e.args[0])
+
             # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
             # return some sort of message that indicates a malformed request
-            await ws.send_str("Echo: {}".format(msg.data))
         elif msg.type == aiohttp.WSMsgType.CLOSE or\
             msg.type == aiohttp.WSMsgType.ERROR:
                 break
-
     app["sockets"].remove(ws)
     logging.debug("Closed connection.")
     return ws
@@ -117,7 +119,7 @@ def move_from_to(team_id, move_direction):
 def handle_request(messageDict):
     global game
     global session
-    if "type" in messageDict and "message" in messageDict and "authenticationKey" in messageDict:
+    if "type" in messageDict and "message" in messageDict and "team_id" in messageDict and "authenticationKey" in messageDict:
         if messageDict["type"].upper() == "REGISTRATION":
             game.spawn_player(int(messageDict["team_id"]))
             move_queue_dict[messageDict["team_id"]] = MoveQueue(messageDict["team_id"])
@@ -125,14 +127,21 @@ def handle_request(messageDict):
         # TODO: this handles one player's requests. must ensure other player moves in parallel somehow
         elif messageDict["type"].upper() == "MOVE":
             if messageDict["team_id"] not in move_queue_dict:
-                logging.info("Unregistered team tried to submit a move")
+                logging.info("Unregistered team tried to submit a move.")
+                raise ValueError("Unregistered team " + messageDict["team_id"] + " tried to submit a move.")
+            elif messageDict["message"].upper() not in ("UP", "DOWN", "LEFT", "RIGHT"):
+                logging.info("Invalid move received " + messageDict["message"])
+                raise ValueError("Invalid move " + messageDict["message"] + " received.")
             else:
                 move_queue_dict[messageDict["team_id"]].add_move(messageDict["message"].upper())
         else:
             logging.info("Message with invalid type received: " + messageDict)
+            raise ValueError("Message with invalid type " + messageDict["type"] + " received.")
     else:
-        logging.info("Malformed message received: " + messageDict)
-        return
+        logging.info("Message with invalid field received: " + messageDict)
+        raise ValueError("Message with invalid field received.")
+
+    return
     
 def get_json_serialized_game_state():
     global game

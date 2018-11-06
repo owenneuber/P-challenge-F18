@@ -21,7 +21,7 @@ GAME_GRID_SIZE = 10
 logging.basicConfig(level=logging.INFO)
 game = Game(GAME_GRID_SIZE)
 
-engine = engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db') 
+engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db')
 Session = sessionmaker(bind=engine)
 session = Session() # session to use in functions which need it
 
@@ -36,12 +36,12 @@ def validate_team(team_id, token):
 # HTTP endpoint to start game (i.e. sets game_started as true)
 async def start_game(request):
     global game
-    if game.started == False:
+    if game.started == False and len(app["sockets"]) == 2:
         game.start()
         logging.info("Starting game")
         data = {"Result" : "Game started"}
     else:
-        data = {"Result" : "Game not started.  Game is already running."}
+        data = {"Result" : "Game not started."}
     return web.json_response(data)
 
 async def stop_game(request):
@@ -87,8 +87,6 @@ async def wshandler(request):
             except ValueError as e:
                 await ws.send_str("Invalid input.  Reason: " + e.args[0])
 
-            # TODO: Ideally, we send back some sort of response confirming appropriate handling of the request or
-            # return some sort of message that indicates a malformed request
         elif msg.type == aiohttp.WSMsgType.CLOSE or\
             msg.type == aiohttp.WSMsgType.ERROR:
                 break
@@ -245,5 +243,3 @@ app.router.add_route("GET", "/stopGame", stop_game)
 
 
 web.run_app(app)
-
-# TODO: disconnects should be handled

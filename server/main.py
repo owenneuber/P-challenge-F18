@@ -69,28 +69,30 @@ async def wshandler(request):
         logging.info("Closing connection since game is already in progress")
         return ws
 
-    while 1:
-        msg = await ws.receive()
-        if msg.type == aiohttp.WSMsgType.TEXT:
-            logging.info("Received message %s" % msg.data)
-            deserialized_data = json.loads(msg.data)
-            if not validate_team(deserialized_data["team_id"], deserialized_data["authenticationKey"]): # check if team is who they say they are
-                logging.info("Team id and/or token invalid")
-                await ws.send_str("The team id and/or token you provided is invalid.")
-                break
-            logging.info("Team number %s validated" % deserialized_data["team_id"])
-            try:
-                handle_request(deserialized_data)
-                await ws.send_str("Echo: {}".format(msg.data))
-            except ValueError as e:
-                await ws.send_str("Invalid input.  Reason: " + e.args[0])
+    try:
+        async for msg in ws:
+            if msg.type == aiohttp.WSMsgType.TEXT:
+                logging.info("Received message %s" % msg.data)
+                deserialized_data = json.loads(msg.data)
+                if not validate_team(deserialized_data["team_id"],
+                                     deserialized_data["authenticationKey"]):  # check if team is who they say they are
+                    logging.info("Team id and/or token invalid")
+                    await ws.send_str("The team id and/or token you provided is invalid.")
+                    break
+                logging.info("Team number %s validated" % deserialized_data["team_id"])
+                try:
+                    handle_request(deserialized_data)
+                    await ws.send_str("Echo: {}".format(msg.data))
+                except ValueError as e:
+                    await ws.send_str("Invalid input.  Reason: " + e.args[0])
 
-        elif msg.type == aiohttp.WSMsgType.CLOSE or\
-            msg.type == aiohttp.WSMsgType.ERROR:
+            elif msg.type == aiohttp.WSMsgType.CLOSE or \
+                    msg.type == aiohttp.WSMsgType.ERROR:
                 break
-    app["sockets"].remove(ws)
-    logging.info("Closed connection.")
-    return ws
+    finally:
+        app["sockets"].remove(ws)
+        logging.info("Closed connection.")
+    return
 
 
 
@@ -155,6 +157,8 @@ async def game_loop(app):
             json_game_state = get_json_serialized_game_state()
             if "Game Complete" not in json_game_state:
                 print_game_state(get_json_serialized_game_state())
+            else:
+                await reset_game()
             for ws in app["sockets"]:
                 await ws.send_str(get_json_serialized_game_state())
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
@@ -222,6 +226,23 @@ def apply_moves():
 
         else:  # neither player died so move the player as requested and set their old position as "trail"
             game.update_game_state({start: "trail", moving_to: team_id})
+
+async def reset_game():
+    global game
+    logging.info("Resetting game")
+    ws_closers = [ws.close()
+        for ws in app["sockets"]
+        if not ws.closed]
+
+    for ws in app["sockets"]:
+        ws.force_close()
+    # Watch out, this will keep us from returing the response
+    # until all are closed
+    ws_closers and await asyncio.gather(*ws_closers)
+    logging.info("Connections closed")
+    move_queue_dict.clear()
+    game.reset_game()
+    return
 
 app = web.Application()
 

@@ -8,24 +8,25 @@ import json
 async def happy_path():
     async with websockets.connect(
             'ws://localhost:8080/connect') as websocket:
-        data = {"team_id":2,"authenticationKey":"team2key","type":"REGISTRATION","message":""}
+        authenticationKey = "98681ce187e5044b2f75b1173899731f7531d222"
+        data = {"team_id":2,"authenticationKey":authenticationKey,"type":"REGISTRATION","message":""}
         await websocket.send(json.dumps(data))
-        data = {"team_id":2, "authenticationKey": "team2key", "type": "MOVE",
+        data = {"team_id":2, "authenticationKey":authenticationKey, "type": "MOVE",
                 "message": "LEFT"}
         await websocket.send(json.dumps(data))
-        data = {"team_id":2, "authenticationKey": "team2key", "type": "MOVE",
+        data = {"team_id":2, "authenticationKey":authenticationKey, "type": "MOVE",
                 "message": "LEFT"}
         await websocket.send(json.dumps(data))
-        data = {"team_id":2, "authenticationKey": "team2key", "type": "MOVE",
+        data = {"team_id":2, "authenticationKey":authenticationKey, "type": "MOVE",
                 "message": "DOWN"}
         await websocket.send(json.dumps(data))
-        data = {"team_id":2, "authenticationKey": "team2key", "type": "MOVE",
+        data = {"team_id":2, "authenticationKey":authenticationKey, "type": "MOVE",
                 "message": "LEFT"}
         await websocket.send(json.dumps(data))
-        data = {"team_id": 2, "authenticationKey": "team2key", "type": "MOVE",
+        data = {"team_id": 2, "authenticationKey":authenticationKey, "type": "MOVE",
                 "message": "LEFT"}
         await websocket.send(json.dumps(data))
-        data = {"team_id": 2, "authenticationKey": "team2key", "type": "MOVE",
+        data = {"team_id": 2, "authenticationKey":authenticationKey, "type": "MOVE",
                 "message": "LEFT"}
         await websocket.send(json.dumps(data))
         while(1):

@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 
-# we should have some util functions for testing websocket stuff
-
 import asyncio
 import websockets
 from time import sleep
 import json
 
-# A shitty function that pings the server on loop
-
+# Should automatically disconnect
 async def invalid_messages():
     async with websockets.connect(
             'ws://localhost:8080/connect') as websocket:

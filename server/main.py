@@ -108,9 +108,9 @@ async def dev_wshandler(request):
                 break
 
         if is_valid_message(msg.data):
-            await ws.send_str("Invalid message.  %s" % msg.data)
-        else:
             await ws.send_str("Valid message.  %s" % msg.data)
+        else:
+            await ws.send_str("Invalid message.  %s" % msg.data)
 
     app["sockets"].remove(ws)
     logging.info("Closed connection.")
@@ -263,14 +263,13 @@ def apply_moves():
 def is_valid_message(serialized_message):
     try:
         deserialized_data = json.loads(serialized_message)
-        if "type" not in deserialized_data or "message" not in deserialized_data \
-                or "authenticationKey" not in deserialized_data or "team_id" not in deserialized_data:
+        if ("type" not in deserialized_data or "message" not in deserialized_data \
+                or "authenticationKey" not in deserialized_data or "team_id" not in deserialized_data) and len(deserialized_data) == 2:
             return False
         if deserialized_data["type"].upper() == "MOVE" and deserialized_data["message"].upper() not in ("LEFT","RIGHT","UP","DOWN"):
             return False
     except JSONDecodeError:
         return False
-
     return True
 
 app = web.Application()

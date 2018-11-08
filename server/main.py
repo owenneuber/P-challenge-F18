@@ -2,6 +2,7 @@
 
 import asyncio
 import sys
+from json import JSONDecodeError
 
 import aiohttp
 from aiohttp import web
@@ -92,7 +93,28 @@ async def wshandler(request):
     logging.info("Closed connection.")
     return ws
 
+async def dev_wshandler(request):
+    app = request.app
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+    app["dev_sockets"].append(ws)
 
+    while 1:
+        msg = await ws.receive()
+        if msg.type == aiohttp.WSMsgType.TEXT:
+            logging.info("Received message %s" % msg.data)
+        elif msg.type == aiohttp.WSMsgType.CLOSE or\
+            msg.type == aiohttp.WSMsgType.ERROR:
+                break
+
+        if is_valid_message(msg.data):
+            await ws.send_str("Invalid message.  %s" % msg.data)
+        else:
+            await ws.send_str("Valid message.  %s" % msg.data)
+
+    app["sockets"].remove(ws)
+    logging.info("Closed connection.")
+    return ws
 
 def move_from_to(team_id, move_direction):
     """Takes in the message of a user who is moving and returns the grid position
@@ -223,10 +245,25 @@ def apply_moves():
         else:  # neither player died so move the player as requested and set their old position as "trail"
             game.update_game_state({start: "trail", moving_to: team_id})
 
+def is_valid_message(serialized_message):
+    try:
+        deserialized_data = json.loads(serialized_message)
+        if "type" not in deserialized_data or "message" not in deserialized_data \
+                or "authenticationKey" not in deserialized_data or "team_id" not in deserialized_data:
+            return False
+        if deserialized_data["type"].upper() == "MOVE" and deserialized_data["message"].upper() not in ("LEFT","RIGHT","UP","DOWN"):
+            return False
+    except JSONDecodeError:
+        return False
+
+    return True
+
 app = web.Application()
 
 # a list of all the active socket connections
 app["sockets"] = []
+
+app["dev_sockets"] = []
 
 # a dictionary of id - move queue pairs
 move_queue_dict = {}
@@ -234,6 +271,7 @@ move_queue_dict = {}
 asyncio.ensure_future(game_loop(app))
 
 app.router.add_route("GET", "/connect", wshandler)
+app.router.add_route("GET", "/connect_dev", dev_wshandler)
 app.router.add_route("GET", "/startGame", start_game)
 app.router.add_route("GET", "/stopGame", stop_game)
 

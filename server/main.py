@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 
 from datastructures.game import Game
 
-from server.datastructures.move_queue import MoveQueue
+from datastructures.move_queue import MoveQueue
 
 GAME_LOOP_INTERVAL_IN_SECONDS = 3
 GAME_GRID_SIZE = 10
@@ -152,15 +152,17 @@ async def game_loop(app):
     while 1:
         if game.started:
             apply_moves()
-            json_game_state = get_json_serialized_game_state()
-            if "Game Complete" not in json_game_state:
-                print_game_state(get_json_serialized_game_state())
+            print_game_state()
             for ws in app["sockets"]:
                 await ws.send_str(get_json_serialized_game_state())
+            #if game.current_game.is_complete:
+            #    game.stop() Not sure if this should be here
+            # If the game is done, should we exit out of this loop? idk
         await asyncio.sleep(GAME_LOOP_INTERVAL_IN_SECONDS)
 
-def print_game_state(game_state_json):
-    game_state_dict = json.loads(game_state_json)
+def print_game_state():
+    global game
+    game_state_dict = game.game_grid
     game_arr = []
     for i in range(0, 12):
         new = []
@@ -183,45 +185,58 @@ def print_game_state(game_state_json):
                 sys.stdout.write("W")
             elif val == "trail":
                 sys.stdout.write("T")
+            elif val == "collision":
+                sys.stdout.write("C")
+            elif "_dead" in str(val):
+                sys.stdout.write(val.rstrip("_dead")+"D")
             else:
                 sys.stdout.write(str(val))
         print("")
 
 def apply_moves():
-    for team_id in move_queue_dict:
-        team_id = int(team_id)
-        queue = move_queue_dict[team_id]
-        start, moving_to = move_from_to(team_id, queue.dequeue_oldest_move().upper())
-        if game.game_grid[moving_to] != "":
-            # the player is dead
-            game.current_game.is_complete = True
-            if game.game_grid[moving_to] != "wall" and game.game_grid[moving_to] != "trail":
-                # both player collided, neither player gets a win
-                # TODO: make sure its isn't triggered by one team hitting the trail of the other
-                # team by one space (i.e. as the other team was moving out of the way)
-                game.current_game.victor = None
-                logging.info("Both player collided, neither gets a win")
-            else:
-                # the other player won
-                if game.current_game.team1_id == team_id:  # if we are team1, the other team won
-                    game.current_game.victor = game.current_game.team2_id
-                    team = session.query(Teams).filter_by(team_id=game.current_game.team2_id).first()
-                else:
-                    game.current_game.victor = game.current_game.team1_id
-                    team = session.query(Teams).filter_by(team_id=game.current_game.team1_id).first()
-                logging.info("Team " + str(game.current_game.victor) + " won the match")
-                team.games_won += 1
-                session.add(team)
-            game.stop()
-            try:
-                session.add(game.current_game)
-                session.commit()
-            except Exception as e:
-                logging.info(e)
-                session.rollback()
+    team1, team2 = move_queue_dict.items() # 2 tuples of form: (team_id, MoveQueue object)
+    start1, moving_to1 = move_from_to(team1[0], team1[1].dequeue_oldest_move().upper())
+    start2, moving_to2 = move_from_to(team2[0], team2[1].dequeue_oldest_move().upper())
+    team1_dead = False
+    team2_dead = False
+    collision = False
+    logging.info("team " +str(team1[0]) + ": " + start1 + " --> " + moving_to1)
+    logging.info("team " +str(team2[0]) + ": " + start2 + " --> " + moving_to2)
+    
+    if moving_to1 == moving_to2: # they collided!
+        team1_dead = True
+        team2_dead = True
+        collision = True
+        game.current_game.victor = None
+        logging.info("Both player collided")
+        game.update_game_state({start1: "trail", start2: "trail", moving_to1: "collision"})
+    else:
+        if game.game_grid[moving_to1] != "":
+            team1_dead = True
+            
+        if game.game_grid[moving_to2] != "":
+            team2_dead = True
+        
+    if (not team1_dead) and (not team2_dead): # neither player died so move the player as requested and set their old position as "trail"
+        game.update_game_state({start1: "trail", start2: "trail", moving_to1: team1[0], moving_to2: team2[0]})
+        return # the rest of the function can be skipped if both players lived
 
-        else:  # neither player died so move the player as requested and set their old position as "trail"
-            game.update_game_state({start: "trail", moving_to: team_id})
+    if team1_dead and team2_dead and not collision:
+        game.current_game.victor = None
+        logging.info("Both player died at the same time. Neither team wins.")
+        game.update_game_state({start1: "trail", start2: "trail", moving_to1: str(team1[0])+"_dead", moving_to2: str(team2[0])+"_dead"})
+    elif team1_dead:
+        game.current_game.victor = int(team2[0])
+        game.update_game_state({start1: "trail", start2: "trail", moving_to1: str(team1[0])+"_dead", moving_to2: team2[0]})
+    elif team2_dead:
+        game.current_game.victor = int(team1[0])
+        game.update_game_state({start1: "trail", start2: "trail", moving_to1: team1[0], moving_to2: str(team2[0])+"_dead"})
+        
+    if game.current_game.victor:
+        logging.info("Team " + str(game.current_game.victor) + " won the match")
+            
+    game.current_game.is_complete = True
+    game.finish(game.current_game.victor)
 
 app = web.Application()
 

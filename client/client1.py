@@ -6,8 +6,8 @@ import json
 
 async def happy_path():
     async with websockets.connect(
-            'ws://localhost:8080/connect') as websocket:
-        authenticationKey = "team1Key"
+            'ws://35.183.103.104:8080/connect') as websocket:
+        authenticationKey = "team1key"
         data = {"team_id":1,"authenticationKey":authenticationKey,"type":"REGISTRATION","message":""}
         await websocket.send(json.dumps(data))
         for i in range(1,13):

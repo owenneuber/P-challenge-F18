@@ -82,18 +82,21 @@ async def wshandler(request):
         msg = await ws.receive()
         if msg.type == aiohttp.WSMsgType.TEXT:
             logging.info("Received message %s" % msg.data)
-            deserialized_data = json.loads(msg.data)
-            if not validate_team(deserialized_data["team_id"],
-                                 deserialized_data["authenticationKey"]):  # check if team is who they say they are
-                logging.info("Team id and/or token invalid")
-                await ws.send_str("The team id and/or token you provided is invalid.")
-                break
-            logging.info("Team number %s validated" % deserialized_data["team_id"])
             try:
-                handle_request(deserialized_data)
-                await ws.send_str("Echo: {}".format(msg.data))
-            except ValueError as e:
-                await ws.send_str("Invalid input.  Reason: " + e.args[0])
+                deserialized_data = json.loads(msg.data)
+                if not validate_team(deserialized_data["team_id"],
+                                     deserialized_data["authenticationKey"]):  # check if team is who they say they are
+                    logging.info("Team id and/or token invalid")
+                    await ws.send_str("The team id and/or token you provided is invalid.")
+                    break
+                logging.info("Team number %s validated" % deserialized_data["team_id"])
+                try:
+                    handle_request(deserialized_data)
+                    await ws.send_str("Echo: {}".format(msg.data))
+                except ValueError as e:
+                    await ws.send_str("Invalid input.  Reason: " + e.args[0])
+            except JSONDecodeError:
+                logging.info("Non-JSON message received.")
 
         elif msg.type == aiohttp.WSMsgType.CLOSE or \
                 msg.type == aiohttp.WSMsgType.ERROR:

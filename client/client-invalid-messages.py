@@ -25,6 +25,7 @@ async def invalid_messages():
         data = {"team_id":2, "authenticationKey": "team2key", "type": "MOVE",
                 "message": "INVALID-MOVE"}
         await websocket.send(json.dumps(data))
+
         while(1):
             msg = await websocket.recv()
             print ('Received: ' + msg)

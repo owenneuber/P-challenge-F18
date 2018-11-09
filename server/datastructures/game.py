@@ -100,6 +100,8 @@ class Game:
             print(e)
         # The below should not be needed but for some reason the commented out code
         # above does not work. So this hack will have to do.
+        if winning_team_id == None:
+            return # if no team wins, add no winning team ids
         engine = engine = create_engine('postgresql://postgres:q1w2e3@localhost/WEC.db')
         Session = sessionmaker(bind=engine)
         session1 = Session()

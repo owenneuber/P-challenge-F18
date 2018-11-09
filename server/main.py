@@ -40,6 +40,10 @@ def validate_team(team_id, token):
 async def start_game(request):
     global game
     if game.started == False and len(move_queue_dict) == 2:
+        print_game_state()
+        for ws in app["sockets"]:
+            await ws.send_str(get_json_serialized_game_state())
+        await asyncio.sleep(3)
         game.start()
         logging.info("Starting game")
         data = {"Result": "Game started"}

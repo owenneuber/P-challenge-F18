@@ -191,7 +191,7 @@ async def game_loop(app):
     global game
     global session
     while 1:
-        if game.started:
+        if game.started and not game.current_game.is_complete:
             apply_moves()
             print_game_state()
             for ws in app["sockets"]:
@@ -249,10 +249,12 @@ def apply_moves():
     if moving_to1 == moving_to2:  # they collided!
         team1_dead = True
         team2_dead = True
-        collision = True
         game.current_game.victor = None
         logging.info("Both player collided")
         game.update_game_state({start1: "trail", start2: "trail", moving_to1: "collision"})
+        game.current_game.is_complete = True
+        game.finish(game.current_game.victor)
+        return # no need to do anything more here
     else:
         if game.game_grid[moving_to1] != "":
             team1_dead = True
@@ -265,7 +267,7 @@ def apply_moves():
         game.update_game_state({start1: "trail", start2: "trail", moving_to1: team1[0], moving_to2: team2[0]})
         return  # the rest of the function can be skipped if both players lived
 
-    if team1_dead and team2_dead and not collision:
+    if team1_dead and team2_dead:
         game.current_game.victor = None
         logging.info("Both player died at the same time. Neither team wins.")
         game.update_game_state({start1: "trail", start2: "trail", moving_to1: str(team1[0]) + "_dead",

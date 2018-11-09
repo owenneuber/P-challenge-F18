@@ -81,7 +81,7 @@ async def wshandler(request):
     while 1:
         msg = await ws.receive()
         if msg.type == aiohttp.WSMsgType.TEXT:
-            logging.info("Received message %s" % msg.data)
+            # logging.info("Received message %s" % msg.data)
             try:
                 deserialized_data = json.loads(msg.data)
                 if not validate_team(deserialized_data["team_id"],

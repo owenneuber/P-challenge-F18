@@ -10,7 +10,7 @@ async def happy_path():
         authenticationKey = "team1key"
         data = {"team_id":1,"authenticationKey":authenticationKey,"type":"REGISTRATION","message":""}
         await websocket.send(json.dumps(data))
-        for i in range(1,13):
+        for i in range(1,5):
             data = {"team_id":1, "authenticationKey": authenticationKey, "type": "MOVE",
                     "message": "RIGHT"}
             await websocket.send(json.dumps(data))
@@ -18,5 +18,9 @@ async def happy_path():
         while(1):
             msg = await websocket.recv()
             print ('Received: ' + msg)
+            data = {"team_id": 1, "authenticationKey": authenticationKey, "type": "MOVE",
+                    "message": "RIGHT"}
+            await websocket.send(json.dumps(data))
+            await asyncio.sleep(3)
 
 asyncio.get_event_loop().run_until_complete(happy_path())

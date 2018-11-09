@@ -292,8 +292,7 @@ def is_valid_message(serialized_message):
     try:
         deserialized_data = json.loads(serialized_message)
         if ("type" not in deserialized_data or "message" not in deserialized_data \
-            or "authenticationKey" not in deserialized_data or "team_id" not in deserialized_data) and len(
-            deserialized_data) == 2:
+            or "authenticationKey" not in deserialized_data or "team_id" not in deserialized_data) or not len(deserialized_data) == 4:
             return False
         if deserialized_data["type"].upper() == "MOVE" and deserialized_data["message"].upper() not in (
         "LEFT", "RIGHT", "UP", "DOWN"):

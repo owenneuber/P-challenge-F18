@@ -81,7 +81,7 @@ async def wshandler(request):
     while 1:
         msg = await ws.receive()
         if msg.type == aiohttp.WSMsgType.TEXT:
-            # logging.info("Received message %s" % msg.data)
+            logging.info("Prod Received message %s" % msg.data)
             try:
                 deserialized_data = json.loads(msg.data)
                 if not validate_team(deserialized_data["team_id"],
@@ -135,7 +135,10 @@ def move_from_to(team_id, move_direction):
     """Takes in the message of a user who is moving and returns the grid position
     they started in and the one they intend to move to (in a tuple). """
     global game
-    original_position = list(game.game_grid.keys())[list(game.game_grid.values()).index(team_id)]  # "row,column"
+    try:
+        original_position = list(game.game_grid.keys())[list(game.game_grid.values()).index(str(team_id))]  # "row,column"
+    except Exception:
+        original_position = list(game.game_grid.keys())[list(game.game_grid.values()).index(int(team_id))]  # "row,column"
     new_position = list(map(int, original_position.split(",")))  # [int(row), int(column)]
     if move_direction == "UP":
         new_position[0] -= 1
